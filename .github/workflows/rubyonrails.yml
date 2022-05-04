@@ -5,7 +5,34 @@ on:
   pull_request:
     branches: [ main, develop ]
 jobs:
-  test:
+  sqlite:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Set up Ruby 2.7.0
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.0'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libsqlite3-dev
+          gem update --system
+          gem install bundler
+          bundle config path vendor/bundle
+          bundle install --jobs 4 --retry 3
+
+      # - name: Run tests
+      #   env: 
+      #     DATABASE_URL: sqlite://noticed_test
+      #     RAILS_ENV: test
+      #   run: |
+      #     bin/test
+
+  postgres:
     runs-on: ubuntu-latest
 
     services:
@@ -25,14 +52,6 @@ jobs:
         with:
           ruby-version: '2.7.0'
 
-      - name: Cache gems
-        uses: actions/cache@v1
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-${{ matrix.ruby }}-gem-${{ hashFiles('**/Gemfile.lock') }} 
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.ruby }}-gem-
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -42,10 +61,10 @@ jobs:
           bundle config path vendor/bundle
           bundle install --jobs 4 --retry 3
 
-      - name: Run tests
-        env: 
-          DATABASE_URL: postgres://postgres:password@localhost:5432/test
-          PG_USER: postgres
-          RAILS_ENV: test
-        run: |
-          bin/test
+      # - name: Run tests
+      #   env: 
+      #     DATABASE_URL: postgres://postgres:password@localhost:5432/test
+      #     PG_USER: postgres
+      #     RAILS_ENV: test
+      #   run: |
+      #     bin/test
